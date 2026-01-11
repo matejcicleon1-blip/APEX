@@ -7,112 +7,95 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --matrix: #00ff41; --gold: #ffd700; --bg: #010204; --hyper: #ff00ff; }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; display: grid; grid-template-columns: 350px 1fr; height: 100vh; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
         .sidebar { background: #05080a; border-right: 2px solid var(--matrix); padding: 20px; overflow-y: auto; }
-        .main { padding: 40px; display: flex; flex-direction: column; align-items: center; }
-        .terminal { background: #000; border: 2px solid var(--matrix); border-radius: 20px; padding: 25px; width: 100%; max-width: 500px; text-align: center; }
-        input { background: transparent; border: none; border-bottom: 4px solid var(--matrix); color: var(--matrix); font-size: 60px; width: 120px; text-align: center; outline: none; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; width: 100%; margin-top: 20px; }
-        .card { padding: 20px 5px; border-radius: 10px; text-align: center; font-size: 28px; font-weight: bold; background: #0a0f14; border: 1px solid #1a2635; position: relative; }
-        .active-anchor { border: 2px solid var(--hyper); color: var(--hyper); box-shadow: 0 0 15px var(--hyper); }
+        .main { padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .terminal { background: #000; border: 2px solid var(--matrix); border-radius: 20px; padding: 20px; width: 100%; max-width: 450px; text-align: center; }
+        input { background: transparent; border: none; border-bottom: 3px solid var(--matrix); color: var(--matrix); font-size: 50px; width: 100px; text-align: center; outline: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; width: 100%; margin-top: 20px; }
+        .card { padding: 20px 5px; border-radius: 10px; text-align: center; font-size: 24px; font-weight: bold; background: #0a0f14; border: 1px solid #1a2635; }
+        .active-anchor { border: 2px solid var(--hyper); color: var(--hyper); box-shadow: 0 0 10px var(--hyper); }
         .btn { background: var(--matrix); color: black; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        .cloud-indicator { font-size: 10px; color: #555; text-align: center; margin-bottom: 15px; }
+        #ai-log { height: 200px; overflow-y: auto; font-size: 11px; margin-top: 20px; color: #888; border-top: 1px solid #222; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <div class="cloud-indicator">SYSTEM STATUS: <span id="sync-status" style="color:red;">OFFLINE</span></div>
-    <h2 style="color: var(--matrix); font-size: 16px;">GLOBAL CLOUD BRAIN</h2>
-    
-    <div style="background: #111; padding: 15px; border-radius: 10px;">
-        <span style="font-size: 10px; color: #666;">UKUPNO BROJEVA U OBLAKU:</span>
-        <div id="global-count" style="font-size: 24px; color: var(--gold);">Učitavanje...</div>
+    <div style="font-size: 10px; color: var(--matrix); margin-bottom: 10px;">STATUS: <span id="sync-status" style="color:red;">CONNECTING...</span></div>
+    <h2 style="color: var(--matrix); font-size: 18px;">CLOUD BRAIN</h2>
+    <div style="background: #111; padding: 10px; border-radius: 8px;">
+        <span style="font-size: 10px; color: #666;">GLOBAL DATABASE:</span>
+        <div id="global-count" style="font-size: 20px; color: var(--gold);">0</div>
     </div>
-
-    <div id="ai-log" style="height: 300px; overflow-y: auto; font-size: 11px; margin-top: 20px; color: #888; border-top: 1px solid #222; padding-top: 10px;"></div>
+    <div id="ai-log"></div>
 </div>
 
 <div class="main">
     <div class="terminal">
-        <h1 style="margin:0; font-size: 10px; letter-spacing: 5px; color: var(--matrix);">APEX V100 CLOUD</h1>
         <input type="number" id="numIn" placeholder="??" autofocus>
         <button class="btn" onclick="sendToCloud()">POŠALJI SVIMA</button>
     </div>
-
-    <div id="prob-display" style="margin: 20px; font-size: 20px; color: var(--matrix);">CONFIDENCE: 0%</div>
+    <div id="prob-display" style="margin: 15px; font-size: 18px; color: var(--matrix);">CONFIDENCE: 0%</div>
     <div class="grid" id="predictionGrid"></div>
 </div>
 
 <script>
-    // --- OVDJE ZALIJEPI SVOJE FIREBASE PODATKE IZ KORAKA 2 ---
+    // TVOJI PODACI SA SLIKE 3
     const firebaseConfig = {
-        apiKey: "TVOJ_API_KEY",
-        authDomain: "TVOJ_PROJECT.firebaseapp.com",
-        databaseURL: "https://TVOJ_PROJECT.firebaseio.com",
-        projectId: "TVOJ_PROJECT",
-        storageBucket: "TVOJ_PROJECT.appspot.com",
-        messagingSenderId: "TVOJ_ID",
-        appId: "TVOJ_APP_ID"
+        apiKey: "AIzaSyCf6hLEM-bysby0Oc8ftp0bNG0TrS2kkaE",
+        authDomain: "apex-server-99ed8.firebaseapp.com",
+        databaseURL: "https://apex-server-99ed8-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "apex-server-99ed8",
+        storageBucket: "apex-server-99ed8.firebasestorage.app",
+        messagingSenderId: "456350374002",
+        appId: "1:456350374002:web:fe02fd3e96ce56934e4aeb"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    // Tvoja baza od 383 broja kao početak
     const INITIAL_BRAIN = [35,8,0,7,26,1,11,6,7,36,17,19,36,6,11,3,20,27,9,7,5,4,5,24,3,31,6,3,0,13,12,13,4,4,4,12,23,16,36,15,25,7,24,34,4,28,32,6,29,21,1,34,36,34,27,25,36,17,1,4,12,13,3,15,32,19,5,27,1,7,0,7,33,33,8,3,0,31,9,0,14,31,17,26,26,36,18,36,20,2,32,33,31,18,14,19,19,6,32,8,26,1,34,18,25,24,6,10,22,15,16,5,23,30,22,27,31,9,14,1,25,5,7,15,19,28,33,21,3,24,34,25,18,27,34,11,4,28,34,26,24,24,25,8,4,34,8,16,11,34,4,26,29,3,32,11,25,23,28,6,20,12,6,29,32,33,25,21,22,31,17,26,26,36,18,36,20,2,32,33,31,18,14,19,19,6,32,8,26,1,34,18,25,24,6,10,22,15,16,5,23,30,22,27,31,9,14,14,34,31,32,4,27,1,4,23,0,34,23,13,17,29,28,12,24,5,14,1,6,16,24,35,20,7,11,8,32,20,31,3,29,27,35,11,32,19,13,8,12,3,26,28,24,25,32,22,29,7,29,36,8,32,12,22,27,9,23,17,11,27,30,8,6,36,18,17,5,15,9,22,19,1,6,4,21,28,20,3,8,21,12,16,22,36,24,9,8,34,23,2,2,11,6,11,15,8,35,22,30,27,5,31,6,30,6,25,31,19,18,34,9,7,19,16,20,19,36,10,19,2,29,5,13,14,34,27,16,29,8,17,5,0,33,17,8,5,25,23,17,14,0,5,12,36,18,16,18,7,9,33,18,23,4,9,10,28,26,27,11,34,19,35,12,20,13,25,18,34,5,17,3,8,5,6,23,28,12,18,6,27,27,10,36,18,30,13,21,35,29,23,13,24,29,5,10,19,18,10,9,23,27,4,8,35,22,2,33,18,6,5,29,25,25,25,8,21,20,12,18,27,27,15,6,4,36,22,14,23,12,8,1,35,22,30,8,16,33,24,19,8,26,26,18,19];
     let GLOBAL_DATA = [];
 
-    // --- SLUŠANJE PROMJENA U OBLAKU ---
     db.ref('roulette_history').on('value', (snapshot) => {
         const cloudData = snapshot.val() || [];
         GLOBAL_DATA = INITIAL_BRAIN.concat(cloudData);
         document.getElementById('global-count').innerText = GLOBAL_DATA.length;
-        document.getElementById('sync-status').innerText = "LIVE";
+        document.getElementById('sync-status').innerText = "LIVE (SYNCED)";
         document.getElementById('sync-status').style.color = "var(--matrix)";
-        log("Sinkronizacija s oblakom završena.");
-        
         if(GLOBAL_DATA.length > 0) runAnalysis(GLOBAL_DATA[GLOBAL_DATA.length-1]);
     });
 
     function sendToCloud() {
         let val = parseInt(document.getElementById('numIn').value);
         if(isNaN(val)) return;
-        
-        // Uzmi trenutne podatke iz oblaka i dodaj novi broj
         db.ref('roulette_history').once('value', (snapshot) => {
             let current = snapshot.val() || [];
             current.push(val);
             db.ref('roulette_history').set(current);
         });
-
         document.getElementById('numIn').value = '';
         document.getElementById('numIn').focus();
     }
 
     function runAnalysis(last) {
         let weights = {}; for(let i=0; i<=36; i++) weights[i] = 0;
-        
-        // 4x4 Contextual Logic
         for(let i=0; i < GLOBAL_DATA.length - 1; i++) {
             if(GLOBAL_DATA[i] === last) {
-                // Lookback Context
                 if(i >= 4) {
                     let past = GLOBAL_DATA.slice(i-4, i);
                     let current = GLOBAL_DATA.slice(-5, -1);
                     let matches = 0;
                     past.forEach((n, idx) => { if(n === current[idx]) matches++; });
-                    weights[GLOBAL_DATA[i+1]] += (matches * 50);
+                    weights[GLOBAL_DATA[i+1]] += (matches * 60);
                 }
-                // Forward Window
                 for(let j=1; j<=4; j++) {
                     if(GLOBAL_DATA[i+j] !== undefined) weights[GLOBAL_DATA[i+j]] += (5 - j) * 10;
                 }
             }
         }
-
         let sorted = Object.entries(weights).sort((a,b) => b[1] - a[1]);
-        let conf = Math.min(99, Math.floor(sorted[0][1] / 2));
+        let conf = Math.min(99, Math.floor(sorted[0][1] / 2.5));
         render(sorted.slice(0, 18), conf);
     }
 
@@ -125,11 +108,6 @@
             let isHyper = idx < 6 && item[1] > 60;
             g.innerHTML += `<div class="card ${isHyper ? 'active-anchor' : ''}">${n}</div>`;
         });
-    }
-
-    function log(msg) {
-        let l = document.getElementById('ai-log');
-        l.innerHTML = `> ${msg}<br>` + l.innerHTML;
     }
 </script>
 </body>
