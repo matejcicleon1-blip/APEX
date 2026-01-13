@@ -3,162 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEURAL ENGINE V102</title>
+    <title>APEX QUANTUM V103</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --matrix: #00ff41; --gold: #ffd700; --bg: #010204; --hyper: #ff00ff; --accent: #00d4ff; }
+        :root { --matrix: #00ff41; --gold: #ffd700; --bg: #010204; --hyper: #00d4ff; --danger: #ff4b2b; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        .sidebar { background: #05080a; border-right: 2px solid var(--matrix); width: 100%; height: 180px; padding: 15px; overflow-x: auto; display: flex; flex-direction: column; align-items: center; }
-        .main { flex: 1; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-y: auto; }
+        .header { background: #05080a; border-bottom: 2px solid var(--matrix); padding: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+        .main { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
         
-        .status-bar { display: flex; gap: 15px; font-size: 12px; margin-bottom: 10px; width: 100%; justify-content: center; }
-        .stat-item { background: #111; padding: 5px 10px; border: 1px solid var(--matrix); border-radius: 5px; }
+        .history-strip { display: flex; gap: 5px; overflow-x: auto; width: 100%; padding: 10px 0; border-bottom: 1px solid #111; }
+        .ball { min-width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border: 1px solid rgba(255,255,255,0.2); }
+        
+        .sector-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 95%; margin: 10px 0; }
+        .sector-box { background: #0a0f12; border: 1px solid #1a252b; padding: 8px; border-radius: 8px; text-align: center; font-size: 11px; }
+        .hot-s { border-color: var(--matrix); background: rgba(0, 255, 65, 0.1); }
 
-        .last-numbers { display: flex; gap: 8px; margin-top: 10px; }
-        .ball { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; border: 2px solid rgba(255,255,255,0.2); }
+        .terminal { background: #000; border: 2px solid var(--matrix); border-radius: 15px; padding: 15px; width: 90%; text-align: center; margin-top: 5px; box-shadow: 0 0 20px rgba(0,255,65,0.2); }
+        input { background: transparent; border: none; border-bottom: 3px solid var(--matrix); color: var(--matrix); font-size: 40px; width: 100px; text-align: center; outline: none; }
         
-        .hot-zone-display { background: var(--accent); color: black; font-weight: bold; padding: 4px 12px; border-radius: 20px; margin-top: 10px; font-size: 14px; animation: pulse 2s infinite; }
+        .prediction-title { color: var(--gold); font-weight: bold; margin-top: 15px; text-transform: uppercase; letter-spacing: 2px; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; margin-top: 10px; padding-bottom: 30px; }
+        .card { background: #0a0f12; border: 1px solid #1a252b; border-radius: 8px; padding: 12px 5px; text-align: center; font-size: 20px; position: relative; font-weight: bold; }
+        .top-pick { border: 2px solid var(--hyper); box-shadow: 0 0 15px rgba(0,212,255,0.3); }
+        .score-tag { position: absolute; top: 2px; right: 2px; font-size: 8px; color: var(--matrix); }
 
-        .terminal { background: #000; border: 2px solid var(--matrix); border-radius: 20px; padding: 15px; width: 90%; text-align: center; margin-top: 10px; }
-        input { background: transparent; border: none; border-bottom: 4px solid var(--matrix); color: var(--matrix); font-size: 60px; width: 120px; text-align: center; outline: none; }
+        button { background: var(--matrix); color: black; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 90%; margin-top: 10px; cursor: pointer; }
         
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin-top: 20px; padding-bottom: 40px; }
-        .card { background: #0a0f12; border: 1px solid #1a252b; border-radius: 12px; padding: 15px; text-align: center; font-size: 28px; position: relative; font-weight: bold; }
-        .active-anchor { border: 2px solid var(--hyper); box-shadow: 0 0 20px rgba(255,0,255,0.4); }
-        .score-box { position: absolute; top: 5px; right: 5px; font-size: 10px; color: var(--matrix); }
-        .sector-label { display: block; font-size: 10px; color: var(--accent); margin-top: 5px; }
-
-        button { background: var(--matrix); color: black; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 18px; margin-top: 15px; width: 90%; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-        .red { background: #ff4b2b; } .black { background: #2b2b2b; } .green { background: #00ff41; color: black; }
+        .red { background: var(--danger); } .black { background: #2b2b2b; } .green { background: var(--matrix); color: black; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="status-bar">
-            <div class="stat-item" id="status">CONNECTING...</div>
-            <div class="stat-item">ARCHIVE: <span id="arc-count">0</span></div>
-            <div class="stat-item" id="prob-val">0%</div>
-        </div>
-        <div id="hotZone" class="hot-zone-display">WAITING FOR DATA...</div>
-        <div class="last-numbers" id="ballHistory"></div>
+    <div class="header">
+        <div id="status">OFFLINE</div>
+        <div>DB: <span id="arc-count">0</span></div>
+        <div id="prob-val" style="color:var(--gold)">0%</div>
     </div>
 
+    <div class="history-strip" id="ballHistory"></div>
+
     <div class="main">
+        <div class="sector-map" id="sectorDisplay">
+            </div>
+
         <div class="terminal">
-            <input type="number" id="numIn" placeholder="?">
-            <button onclick="process()">EXECUTE ANALYSIS</button>
+            <input type="number" id="numIn" placeholder="IN" pattern="\d*">
+            <button onclick="process()">ANALYZE & COVER 22</button>
         </div>
 
+        <div class="prediction-title">Quantum Coverage (22 Numbers)</div>
         <div class="grid" id="predictionGrid"></div>
     </div>
 
 <script>
-    // 1. KONFIGURACIJA
-    const firebaseConfig = {
-        databaseURL: "https://apex-server-99ed8-default-rtdb.firebaseio.com/"
-    };
+    const firebaseConfig = { databaseURL: "https://apex-server-99ed8-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. RUČNO MAPIRANJE 8 SEKTORA (OKTANATA)
-    const OCTANTS = {
-        1: [0, 32, 15, 19, 4], 2: [21, 2, 25, 17, 34],
-        3: [6, 27, 13, 36, 11], 4: [30, 8, 23, 10, 5],
-        5: [24, 16, 33, 1, 20], 6: [14, 31, 9, 22, 18],
-        7: [29, 7, 28, 12, 35], 8: [3, 26, 0, 32, 15]
+    // 6 SEKTORA (HEX-ZONES) PO 6 BROJEVA + 0 KAO SPECIJALNI
+    const HEX_ZONES = {
+        "Z-1": [32, 15, 19, 4, 21, 2],
+        "Z-2": [25, 17, 34, 6, 27, 13],
+        "Z-3": [36, 11, 30, 8, 23, 10],
+        "Z-4": [5, 24, 16, 33, 1, 20],
+        "Z-5": [14, 31, 9, 22, 18, 29],
+        "Z-6": [7, 28, 12, 35, 3, 26],
+        "ZERO": [0]
     };
 
-    const WHEEL_ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+    const WHEEL = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
     const REDS = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
 
-    let ARCHIVE = [32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26]; // Temeljna arhiva
+    let ARCHIVE = [32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
 
-    function getOctant(n) {
-        for(let z in OCTANTS) if(OCTANTS[z].includes(n)) return z;
-        return 1;
-    }
-
-    // 3. LOGIKA POVEZIVANJA
     db.ref('roulette/history').on('value', (snap) => {
         let cloudData = snap.val() ? Object.values(snap.val()) : [];
         let fullHistory = ARCHIVE.concat(cloudData);
-        document.getElementById('status').innerText = "ONLINE";
-        document.getElementById('status').style.color = "var(--matrix)";
+        document.getElementById('status').innerText = "QUANTUM ONLINE";
         document.getElementById('arc-count').innerText = fullHistory.length;
-        updateUI(fullHistory);
+        updateLogic(fullHistory);
     });
 
     function process() {
         let n = parseInt(document.getElementById('numIn').value);
-        if(!isNaN(n) && n >= 0 && n <= 36) {
+        if(!isNaN(n) && n>=0 && n<=36) {
             db.ref('roulette/history').push(n);
             document.getElementById('numIn').value = '';
         }
     }
 
-    function updateUI(history) {
-        if(history.length === 0) return;
-
-        // Analiza vruće zone (Octant)
-        let zoneStats = {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0};
-        let last5 = history.slice(-5);
-        last5.forEach(x => zoneStats[getOctant(x)]++);
-        let hotZone = Object.keys(zoneStats).reduce((a, b) => zoneStats[a] > zoneStats[b] ? a : b);
-        document.getElementById('hotZone').innerText = "HOT ZONE: OCTANT " + hotZone;
-
-        // Markov Chain + Sector Bias
-        let predictions = [];
-        let lastNum = history[history.length - 1];
-
-        for(let i=0; i<=36; i++) {
-            let score = 0;
-            // Provjera parova u arhivi
-            for(let j=0; j<history.length-1; j++) {
-                if(history[j] === lastNum && history[j+1] === i) score += 10;
-            }
-            // Bonus za Hot Zone
-            if(getOctant(i) == hotZone) score += 15;
-            // Bonus za susjede na kolu
-            let idx1 = WHEEL_ORDER.indexOf(lastNum);
-            let idx2 = WHEEL_ORDER.indexOf(i);
-            if(Math.abs(idx1 - idx2) <= 2) score += 5;
-
-            predictions.push({num: i, score: score});
-        }
-
-        predictions.sort((a,b) => b.score - a.score);
-        render(predictions.slice(0, 12), history.slice(-15));
+    function getZone(n) {
+        for(let z in HEX_ZONES) if(HEX_ZONES[z].includes(n)) return z;
+        return "ZERO";
     }
 
-    function render(list, last15) {
+    function updateLogic(history) {
+        if(history.length < 1) return;
+        const lastNum = history[history.length - 1];
+        
+        // 1. Analiza topline sektora
+        let zoneHeat = {"Z-1":0, "Z-2":0, "Z-3":0, "Z-4":0, "Z-5":0, "Z-6":0, "ZERO":0};
+        history.slice(-12).forEach(n => zoneHeat[getZone(n)]++);
+
+        // 2. Kalkulacija za svaki broj (0-36)
+        let results = [];
+        for(let i=0; i<=36; i++) {
+            let score = 0;
+            
+            // Markov pattern (iz tvoje baze)
+            for(let j=0; j<history.length-1; j++) {
+                if(history[j] === lastNum && history[j+1] === i) score += 25;
+            }
+
+            // Sector Heat bonus
+            score += (zoneHeat[getZone(i)] * 10);
+
+            // Wheel Geometry (Susjedi)
+            let dist = Math.min(Math.abs(WHEEL.indexOf(lastNum) - WHEEL.indexOf(i)), 37 - Math.abs(WHEEL.indexOf(lastNum) - WHEEL.indexOf(i)));
+            if(dist <= 3) score += 15;
+
+            results.push({num: i, score: score});
+        }
+
+        // Sortiranje i uzimanje najboljih 22
+        results.sort((a,b) => b.score - a.score);
+        render(results.slice(0, 22), history.slice(-20), zoneHeat);
+    }
+
+    function render(top22, last20, zoneHeat) {
         const grid = document.getElementById('predictionGrid');
         grid.innerHTML = '';
         
-        // Prikaz kuglica u boji
-        const historyDiv = document.getElementById('ballHistory');
-        historyDiv.innerHTML = '';
-        last15.reverse().forEach(n => {
-            let color = n === 0 ? 'green' : (REDS.includes(n) ? 'red' : 'black');
-            historyDiv.innerHTML += `<div class="ball ${color}">${n}</div>`;
+        // Update Kuglica
+        const hDiv = document.getElementById('ballHistory');
+        hDiv.innerHTML = '';
+        [...last20].reverse().forEach(n => {
+            let c = n===0 ? 'green' : (REDS.includes(n) ? 'red' : 'black');
+            hDiv.innerHTML += `<div class="ball ${c}">${n}</div>`;
         });
 
-        // Prikaz kartica
-        list.forEach((p, idx) => {
-            let isHyper = idx < 6 && p.score > 20;
+        // Update Sektora
+        const sDiv = document.getElementById('sectorDisplay');
+        sDiv.innerHTML = '';
+        for(let z in HEX_ZONES) {
+            if(z === "ZERO") continue;
+            let isHot = zoneHeat[z] > 2;
+            sDiv.innerHTML += `<div class="sector-box ${isHot ? 'hot-s' : ''}">${z}<br>${zoneHeat[z]} Hits</div>`;
+        }
+
+        // Prikaz 22 broja
+        top22.forEach((p, idx) => {
+            let color = p.num===0 ? 'green' : (REDS.includes(p.num) ? 'red' : 'black');
             grid.innerHTML += `
-                <div class="card ${isHyper ? 'active-anchor' : ''}">
-                    <span class="score-box">${p.score}</span>
+                <div class="card ${idx < 6 ? 'top-pick' : ''}" style="border-bottom: 3px solid ${color==='red'?'#ff4b2b':'#444'}">
+                    <span class="score-tag">${p.score}</span>
                     ${p.num}
-                    <span class="sector-label">ZONE ${getOctant(p.num)}</span>
                 </div>
             `;
         });
-        document.getElementById('prob-val').innerText = (40 + (list[0].score)).toFixed(0) + "%";
+
+        document.getElementById('prob-val').innerText = "COVERAGE: 59.4%";
     }
 </script>
 </body>
