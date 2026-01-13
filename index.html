@@ -3,24 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>APEX ULTIMATE V105</title>
+    <title>APEX V106 - QUANTUM 22</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --matrix: #00ff41; --gold: #ffd700; --bg: #010204; --hyper: #00d4ff; --danger: #ff4b2b; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; }
         .header { background: #05080a; border-bottom: 2px solid var(--matrix); padding: 10px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 999; }
-        .history-strip { display: flex; gap: 5px; overflow-x: auto; padding: 10px; background: #000; min-height: 35px; border-bottom: 1px solid #111; }
-        .ball { min-width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; border: 1px solid #333; }
+        .history-strip { display: flex; gap: 5px; overflow-x: auto; padding: 10px; background: #000; height: 35px; border-bottom: 1px solid #111; }
+        .ball { min-width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border: 1px solid #333; }
         .main { padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .terminal { background: #000; border: 2px solid var(--matrix); border-radius: 15px; padding: 20px; width: 90%; text-align: center; margin-bottom: 20px; box-shadow: 0 0 30px rgba(0,255,65,0.1); }
-        input { background: transparent; border: none; border-bottom: 3px solid var(--matrix); color: var(--matrix); font-size: 50px; width: 120px; text-align: center; outline: none; }
-        .prediction-title { color: var(--gold); font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; font-size: 14px; }
+        input { background: transparent; border: none; border-bottom: 3px solid var(--matrix); color: var(--matrix); font-size: 45px; width: 100px; text-align: center; outline: none; }
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 600px; padding-bottom: 100px; }
-        .card { background: #0a0f12; border: 2px solid #1a252b; border-radius: 10px; padding: 18px 0; text-align: center; font-size: 24px; font-weight: bold; position: relative; transition: 0.3s; }
-        .top-6 { border: 2px solid var(--hyper) !important; box-shadow: 0 0 20px rgba(0,212,255,0.4); }
-        .score-tag { position: absolute; top: 3px; right: 4px; font-size: 9px; color: var(--matrix); font-family: monospace; }
-        .sector-tag { display: block; font-size: 10px; color: #666; margin-top: 5px; }
+        .card { background: #0a0f12; border: 2px solid #1a252b; border-radius: 10px; padding: 18px 0; text-align: center; font-size: 22px; font-weight: bold; position: relative; }
+        .top-6 { border: 2px solid var(--hyper) !important; box-shadow: 0 0 15px rgba(0,212,255,0.3); }
+        .score-tag { position: absolute; top: 3px; right: 4px; font-size: 8px; color: var(--matrix); opacity: 0.7; }
         button { background: var(--matrix); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 95%; margin-top: 15px; font-size: 18px; cursor: pointer; }
         .red { background: var(--danger); } .black { background: #2b2b2b; } .green { background: var(--matrix); color: black; }
     </style>
@@ -28,9 +26,9 @@
 <body>
 
     <div class="header">
-        <div>APEX V105 <span id="status" style="color:var(--danger)">●</span></div>
-        <div id="arc-count" style="font-family: monospace;">DATA: 0</div>
-        <div id="prob-val" style="color:var(--gold)">COV: 22</div>
+        <div id="status-label">APEX V106 <span id="conn-indicator" style="color:var(--danger)">●</span></div>
+        <div id="arc-count">ARCHIVE: 0</div>
+        <div id="prob-val" style="color:var(--gold)">COV: 22/37</div>
     </div>
 
     <div class="history-strip" id="ballHistory"></div>
@@ -38,123 +36,106 @@
     <div class="main">
         <div class="terminal">
             <input type="number" id="numIn" placeholder="?" inputmode="numeric">
-            <button onclick="process()">POKRENI QUANTUM ANALIZU</button>
+            <button onclick="process()">EXECUTE QUANTUM ANALYSIS</button>
         </div>
-        
-        <div class="prediction-title">AI SUGGESTIONS (TOP 22)</div>
         <div class="grid" id="predictionGrid"></div>
     </div>
 
 <script>
-    // 1. FIREBASE KONFIGURACIJA
+    // 1. FIREBASE KONFIGURACIJA (Točna i provjerena)
     const firebaseConfig = { databaseURL: "https://apex-server-99ed8-default-rtdb.firebaseio.com/" };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.database();
 
-    // 2. KOMPLETNA ARHIVA (PATTERN BASE) - Ovdje su svi tvoji brojevi
-    const ARCHIVE = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+    // 2. KOMPLETNA ARHIVA (Puni niz za Pattern Matching)
+    const ARCHIVE = [32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
 
     const WHEEL = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
     const REDS = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
-    
-    // 6 Sektora (Hex-Zones)
-    const SECTORS = {
-        "S1": [32,15,19,4,21,2], "S2": [25,17,34,6,27,13], "S3": [36,11,30,8,23,10],
-        "S4": [5,24,16,33,1,20], "S5": [14,31,9,22,18,29], "S6": [7,28,12,35,3,26]
-    };
+    const SECTORS = { "S1":[32,15,19,4,21,2], "S2":[25,17,34,6,27,13], "S3":[36,11,30,8,23,10], "S4":[5,24,16,33,1,20], "S5":[14,31,9,22,18,29], "S6":[7,28,12,35,3,26], "Z":[0] };
 
-    function getSector(n) {
-        for(let s in SECTORS) if(SECTORS[s].includes(n)) return s;
-        return "Z";
-    }
-
-    // 3. SINHRONIZACIJA S FIREBASE
+    // 3. LISTEN ZA FIREBASE
     db.ref('roulette/history').on('value', (snap) => {
         let cloudData = snap.val() ? Object.values(snap.val()) : [];
         let fullHistory = ARCHIVE.concat(cloudData);
-        document.getElementById('status').style.color = "var(--matrix)";
+        document.getElementById('conn-indicator').style.color = "var(--matrix)";
         document.getElementById('arc-count').innerText = "DATA: " + fullHistory.length;
-        runAI(fullHistory);
+        runQuantumAI(fullHistory);
+    }, (error) => {
+        console.error("Firebase Error:", error);
     });
 
     function process() {
         let input = document.getElementById('numIn');
         let n = parseInt(input.value);
-        if(!isNaN(n) && n>=0 && n<=36) {
+        if(!isNaN(n) && n >= 0 && n <= 36) {
             db.ref('roulette/history').push(n);
             input.value = '';
         }
     }
 
-    // 4. AI LOGIKA (ULTRABRAIN V105)
-    function runAI(history) {
+    // 4. MAIN ENGINE (Level 3 Pattern Recognition)
+    function runQuantumAI(history) {
         if(history.length < 3) return;
         
         const last1 = history[history.length - 1];
         const last2 = history[history.length - 2];
         const last3 = history[history.length - 3];
 
-        // Izračun topline sektora (zadnjih 12 ruku)
-        let sectorHeat = {"S1":0,"S2":0,"S3":0,"S4":0,"S5":0,"S6":0,"Z":0};
-        history.slice(-12).forEach(n => sectorHeat[getSector(n)]++);
+        let heat = {"S1":0,"S2":0,"S3":0,"S4":0,"S5":0,"S6":0,"Z":0};
+        history.slice(-15).forEach(n => {
+            for(let s in SECTORS) if(SECTORS[s].includes(n)) heat[s]++;
+        });
 
         let scores = [];
         for(let i=0; i<=36; i++) {
-            let score = 0;
-
-            // A) DEEP PATTERN MATCHING (Markov Chain Level 3)
+            let s = 0;
+            
+            // PATTERN SEARCH (Gleda do 3 koraka unazad u arhivi)
             for(let j=2; j < history.length - 1; j++) {
-                // Provjera parova (npr. 17 -> ?)
-                if(history[j] === last1 && history[j+1] === i) score += 45;
-                // Provjera trojki (npr. 5 -> 17 -> ?)
-                if(history[j-1] === last2 && history[j] === last1 && history[j+1] === i) score += 85;
-                // Provjera četvorki (npr. 32 -> 5 -> 17 -> ?)
-                if(history[j-2] === last3 && history[j-1] === last2 && history[j] === last1 && history[j+1] === i) score += 150;
+                if(history[j] === last1 && history[j+1] === i) s += 40;
+                if(history[j-1] === last2 && history[j] === last1 && history[j+1] === i) s += 70;
+                if(history[j-2] === last3 && history[j-1] === last2 && history[j] === last1 && history[j+1] === i) s += 120;
             }
 
-            // B) SECTOR DYNAMICS
-            score += (sectorHeat[getSector(i)] * 15);
+            // SECTOR BIAS
+            for(let sector in SECTORS) {
+                if(SECTORS[sector].includes(i)) s += (heat[sector] * 18);
+            }
 
-            // C) WHEEL GEOMETRY (Susjedi na kolu)
-            let posL = WHEEL.indexOf(last1);
-            let posI = WHEEL.indexOf(i);
-            let dist = Math.min(Math.abs(posL - posI), 37 - Math.abs(posL - posI));
-            if(dist <= 2) score += 40; // Direktni susjedi
-            if(dist <= 5 && dist > 2) score += 20; // Širi krug
+            // WHEEL PROXIMITY
+            let dist = Math.min(Math.abs(WHEEL.indexOf(last1)-WHEEL.indexOf(i)), 37-Math.abs(WHEEL.indexOf(last1)-WHEEL.indexOf(i)));
+            if(dist <= 2) s += 45;
+            if(dist <= 5 && dist > 2) s += 20;
 
-            scores.push({num: i, s: score});
+            scores.push({num: i, score: s});
         }
 
-        // Sortiraj po jačini i uzmi najboljih 22
-        scores.sort((a,b) => b.s - a.s);
+        scores.sort((a,b) => b.score - a.score);
         render(scores.slice(0, 22), history.slice(-16));
     }
 
-    function render(top22, last16) {
+    function render(list, last16) {
         const grid = document.getElementById('predictionGrid');
         grid.innerHTML = '';
-        
         const hDiv = document.getElementById('ballHistory');
         hDiv.innerHTML = '';
+
         [...last16].reverse().forEach(n => {
-            let color = n === 0 ? 'green' : (REDS.includes(n) ? 'red' : 'black');
-            hDiv.innerHTML += `<div class="ball ${color}">${n}</div>`;
+            let c = n === 0 ? 'green' : (REDS.includes(n) ? 'red' : 'black');
+            hDiv.innerHTML += `<div class="ball ${c}">${n}</div>`;
         });
 
-        top22.forEach((p, idx) => {
+        list.forEach((p, idx) => {
             let color = p.num === 0 ? 'green' : (REDS.includes(p.num) ? 'red' : 'black');
-            let sector = getSector(p.num);
             grid.innerHTML += `
                 <div class="card ${idx < 6 ? 'top-6' : ''}" style="border-bottom: 4px solid ${color === 'red' ? 'var(--danger)' : (color === 'green' ? 'var(--matrix)' : '#333')}">
-                    <span class="score-tag">${p.s}</span>
+                    <span class="score-tag">${p.score}</span>
                     ${p.num}
-                    <span class="sector-tag">${sector}</span>
                 </div>`;
         });
     }
 </script>
 </body>
 </html>
-
-
 
